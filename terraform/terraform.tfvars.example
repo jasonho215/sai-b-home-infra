@@ -1,0 +1,5 @@
+region              = "ap-singapore-2"
+compartment_ocid    = "ocid1.compartment.oc1..example"
+tenancy_ocid        = "ocid1.tenancy.oc1..example"
+config_file_profile = "DEFAULT"
+bastion_client_cidr = "203.0.113.10/32"
