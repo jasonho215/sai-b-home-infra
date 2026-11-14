@@ -12,9 +12,19 @@ mysql:
 externalDB:
     enabled: true
     externalDriverType: postgres
-    externalConnectionString: ENC[AES256_GCM,data:+RpVAmbsRlEcWJlJQp9MgXPINp8fzVPCFHED7bgzodBdv1dz1p+oDOUGbG4CRqSyDpxlc0HUPsNtAU7nfAJF5noLQEl5Bs8ppJzc2o361WjgvAjqP8ICH9eOglnVjdQSqRov/OAnELfxZLABMIPbGT562Ndu/NVUoTdBEPn3,iv:0ULgKPcLamwCv0kbSZE5JemYxyz+mr0dMx71eYhYyOU=,tag:CiG3MqgRGtMF02bvJxifIA==,type:str]
+    externalConnectionString: ENC[AES256_GCM,data:VYpL6Eusy8pePfN0ntAp9YQxkQzI82+04fxN4PkTZRLPwkP7j9LuuHGy0wZ87WVaG6eZTUHaWIG0UfiNQ9RhYSKk+l0ojDPPIUWE9Tjq029qTPdy+BC6bLbEEvAEwIuwG2MZgUyt7TDOthnMsNBm8QCo5Q+9u3sk/tj1jrXQ,iv:fGYcRDlSDVLt7Onvst5lUWYS/tADBSJP1Ybyf6wnR+g=,tag:uSeIcVjKafOKFfSkzmIR5Q==,type:str]
 config:
     MM_SERVICESETTINGS_SITEURL: https://mattermost.cowzaap.dev
+    MM_EMAILSETTINGS_SENDEMAILNOTIFICATIONS: "true"
+    MM_EMAILSETTINGS_ENABLESMTPAUTH: "true"
+    MM_EMAILSETTINGS_SMTPSERVER: smtp.mx.cloudflare.net
+    MM_EMAILSETTINGS_SMTPPORT: "465"
+    MM_EMAILSETTINGS_CONNECTIONSECURITY: TLS
+    MM_EMAILSETTINGS_SMTPUSERNAME: api_token
+    MM_EMAILSETTINGS_SMTPPASSWORD: ENC[AES256_GCM,data:aZ4iL2QLG7T3wGt6Pa18EUISYjGY+lrRaZveGJ1LR30QznqR93OX2hiZlZNEQn1Uqcv7L5w=,iv:IGFnIFGElhrRV/fBKSmLejHie0hVhRpX9+KXbhbnkv8=,tag:922tEjBAad3U5SILRLkVCg==,type:str]
+    MM_EMAILSETTINGS_FEEDBACKNAME: cowzaap
+    MM_EMAILSETTINGS_FEEDBACKEMAIL: mattermost@cowzaap.dev
+    MM_EMAILSETTINGS_REPLYTOADDRESS: mattermost@cowzaap.dev
 service:
     type: ClusterIP
 ingress:
@@ -41,28 +51,28 @@ securityContext:
     runAsGroup: 2000
     fsGroup: 2000
 sops:
-    encrypted_regex: (password|token|externalConnectionString)$
-    lastmodified: "2026-11-14T17:47:17Z"
-    mac: ENC[AES256_GCM,data:xf4G/0Z1alK8ANCQF2rT0KvOw381A+TqQcnOI8Dw+aqERLRupyVPNADnR7EPm9D4RR2RX4yLDaHUiWkn7AhMYFCtzK1O2ASbIAvCsKzz7npzqYT99GLjXsiQSOh3LMv5TUi9njfHLbyBJbBBEpTQbld2lQOKKemxN/1koIXnvKI=,iv:FEDnC2onCcsIFy60O4MuWZUxcoVljWsfpTntK+IS/EY=,tag:yXEtG4dzths19vmAyivSiA==,type:str]
+    encrypted_regex: (?i)(password|token)$|externalConnectionString$
+    lastmodified: "2026-11-14T18:36:20Z"
+    mac: ENC[AES256_GCM,data:3as3jZ1PQClnXSsOxGNDTc3onHjePOmXwA5Y/9dr3U8dSYF5Kc7yEoUJiJnIZLZ+eo6hOXCeKniXYejtiuMWtfRzHeR9A3buYdURFmAGWUIEjeJRt8eph9mxSOXw/F1X6dSyKWIY8eKi6SUSJTDQieyuJoym4cn9yYV648W8FAw=,iv:o+9umcAVA51sM0mLr3e0jBJ/PIsAuuhzhboeJTVMwiU=,tag:xg3gOVIs8dfkwXLu1vILAw==,type:str]
     pgp:
-        - created_at: "2026-11-14T17:47:17Z"
+        - created_at: "2026-11-14T18:36:20Z"
           enc: |-
             -----BEGIN PGP MESSAGE-----
 
-            hQIMA714KLO3dzZBAQ/7BbQD7hAe2q7GtAQ9UqT5ccoOTUzbstvuEI1pkWgMY3tj
-            avXcJe/fUSNydXzBHvtdRrJVohnXoy17w7n0mmdLM1jO+MEzGuWtx04CLOot8nGJ
-            vllCJu81vnYYFlCX3v8j1hIOhJ45/Hhr8/MrqnPITnL0QBUY0T1Xe0BpR1uZDvaj
-            ees1YcMRLlIiQy5QmzAiwGL17CB/by8k4tQl0jXtleRjKcZVfaffyqnhTaMcuo5a
-            rY05MKOjE9bAaU+wtvsVGku170vAdUVAWSVHiEETJ60AuDlqcEMqhpsokVMonlFh
-            MU3Pnqk8Ul+Q4ftnnpFx00uaMumgM7tFTy7eTYV62HC/CF2AcbPEZIMFuBv4XsTZ
-            qVFwRdbm8Cd7fJg/UJENW81f+NEX3xAycNRsF2YJvUXcOkqJdqBA5hJTDXg/P2y7
-            wiG58+wED2EqzyPLnuHvkGSW5HQyZpfInCPJ0yN20q742RrV5Ky4UKiQVX3cS0Qx
-            wGIOT74RfNqaX3lsrrz7jL1EyyM/xY4H6Fiq4hamOabSaoDKVvtLGfI89UK+Swpa
-            bT8bb1Nr6Aq7wbu36YHNprR2Nl8cweszOMzfXUox9j1g9LyDdCvpdJJ7hYp3tBSp
-            FOJWTa/1OmNk0nNvuHO32tqBMDYUOQM2LhIvX4eb66CEOxxP4MZO156k/Ekz5HLS
-            XgGToLGjWyRz36BQhu5cCtwbYYf4za1B66WmSNHNRbfauBXuoexawaszwYguf5Bh
-            6cqSCLGTHFGvlHOth9M/vqqO2A2KOHm0tq4LHbPS0G75rM2XL+8NvywWO1pFECo=
-            =d4fL
+            hQIMA714KLO3dzZBAQ/+LREhvZ0lKUWgJdCoI2wEBOg5yIBlfF2nhBEcwCG79mXZ
+            FmL9cLdchyw5JYPzPi+Ibnpnsvr7m+JGS/q3JeRNcm3lOAYXAOoPiIHCyDGnHgts
+            WkgQ5USPZbaYGfLzKCJkwC0Y7U4mdpw5iHzj6oiOcIHvtHWr2O05uPAsJwqfqwTY
+            4kS26KQXD2Eog3FChuwayCIMUbDkY1MpHjaJfZX35FGFqPa9hQndnzfNDHGYLNyx
+            D/wyyGvUtDLQwayQ9kYWvMT3mZ5MDGhIMpP7tCa6TXKmcmMojVBpWE9aoxMrt/Of
+            xWEraGpfB1Xd1Llu7RlsaaDnlwtNI4ncQvmY0PremSxeVkq/SA3bLvtMKKn87qOy
+            buVyj/jxu34shKonoUQt536sGT4thoAqGZrTSXB+CRgxpHQEec0qPTLPIVh1IRSW
+            PSlxfbbx5qGTFsKrwyffxBaZR/hb76soyA74MoME7t3qGg04GkME6I/Q93T3TkTV
+            isA0WE+r3cdSU2uN52WevxC8np2All+s1SlC0ChR338Qk7MUysdYpizOSw5bYS7e
+            FGK911gtICA/f04F6SzGwngzG8+knru1R+ABeITFtor85+f+iANFPNyl7mCDc7zA
+            vwzSniEZq9BiiDz+34Ajx9CkWMRU91/tkoYXoIb8weELu+H2T73euAV/YAfGdD7S
+            XgGQZQpytNbbFDJnCtiloTb7eespYQjClObNE1eRSg4bRNeznWAc5ZxpZJ38LCoa
+            38WtCL43c/u8CUm+0Ctr3cGwyd2LoJ6BHLfqz0KagO9/e0f2duVMfRubGVq9CCw=
+            =APwx
             -----END PGP MESSAGE-----
           fp: ED7833DEE149B3BAFDB01329ECE724055939E0C0
     version: 3.13.3

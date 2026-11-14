@@ -1,0 +1,13 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.storageClass.name }}
+  labels:
+    app.kubernetes.io/name: platform
+    app.kubernetes.io/instance: {{ .Release.Name }}
+provisioner: blockvolume.csi.oraclecloud.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  vpusPerGB: {{ .Values.storageClass.vpusPerGB | quote }}

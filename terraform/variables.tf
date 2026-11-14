@@ -19,9 +19,9 @@ variable "tenancy_ocid" {
   type        = string
 }
 
-variable "bastion_client_cidr" {
-  description = "IPv4 CIDR allowed to open OCI Bastion sessions. Use a /32 of the admin workstation."
-  type        = string
+variable "bastion_client_cidrs" {
+  description = "IPv4 CIDRs allowed to open OCI Bastion sessions. Include the workstation and the WARP egress used to reach the bastion."
+  type        = list(string)
 }
 
 variable "kubernetes_version" {

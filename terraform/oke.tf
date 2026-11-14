@@ -64,7 +64,7 @@ resource "oci_bastion_bastion" "this" {
   compartment_id               = var.compartment_ocid
   target_subnet_id             = oci_core_subnet.workers.id
   name                         = local.name
-  client_cidr_block_allow_list = [var.bastion_client_cidr]
+  client_cidr_block_allow_list = var.bastion_client_cidrs
   max_session_ttl_in_seconds   = 10800
 }
 

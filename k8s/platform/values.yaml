@@ -1,0 +1,34 @@
+storageClass:
+  name: oci-bv-lower-cost
+  vpusPerGB: "0"
+
+postgres:
+  namespace: platform
+  image: docker.io/library/postgres:16
+  user: mmuser
+  # Supplied at install from k8s/secrets.enc.yaml.
+  password: ""
+  database: mattermost
+  storage: 20Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+
+mattermost:
+  namespace: mattermost
+
+cloudflared:
+  namespace: cloudflare
+  image: docker.io/cloudflare/cloudflared:2026.11.0
+  replicas: 2
+  # Supplied at install from k8s/secrets.enc.yaml.
+  token: ""
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi

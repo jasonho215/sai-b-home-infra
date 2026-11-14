@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudflared
+  namespace: {{ .Values.cloudflared.namespace }}
+  labels:
+    app.kubernetes.io/name: cloudflared
+    app.kubernetes.io/instance: {{ .Release.Name }}
+type: Opaque
+stringData:
+  token: {{ required "cloudflared.token is required" .Values.cloudflared.token | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: {{ .Values.cloudflared.namespace }}
+  labels:
+    app.kubernetes.io/name: cloudflared
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.cloudflared.replicas }}
+  selector:
+    matchLabels:
+      app: cloudflared
+  template:
+    metadata:
+      labels:
+        app: cloudflared
+        app.kubernetes.io/name: cloudflared
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: cloudflared
+      containers:
+        - name: cloudflared
+          image: {{ .Values.cloudflared.image }}
+          args: ["tunnel", "--no-autoupdate", "run", "--token", "$(TUNNEL_TOKEN)"]
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflared
+                  key: token
+          resources:
+            {{- toYaml .Values.cloudflared.resources | nindent 12 }}

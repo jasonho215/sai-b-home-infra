@@ -21,7 +21,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
     ingress = concat(
       var.mattermost_hostname == "" ? [] : [{
         hostname = var.mattermost_hostname
-        service  = "http://mattermost.mattermost.svc.cluster.local:8065"
+        service  = "http://mattermost-team-edition.mattermost.svc.cluster.local:8065"
       }],
       [{
         service = "http_status:404"

@@ -1,0 +1,10 @@
+# Admin recipient: Jason Ho <jasonho215@gmail.com>
+# ED7833DEE149B3BAFDB01329ECE724055939E0C0
+# Add another fingerprint, comma-separated, to grant decrypt access.
+creation_rules:
+  - path_regex: (^|/)(secrets|mattermost-values)\.enc\.yaml$
+    encrypted_regex: '(?i)(password|token)$|externalConnectionString$'
+    pgp: ED7833DEE149B3BAFDB01329ECE724055939E0C0
+  # Whole-file encryption of generated secrets, tfvars, and state.
+  - path_regex: (^|/)(generated/.+\.enc|terraform\.tfvars\.enc|terraform\.tfstate(\.backup)?\.enc)$
+    pgp: ED7833DEE149B3BAFDB01329ECE724055939E0C0

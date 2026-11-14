@@ -1,6 +1,10 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+!*.tfstate.enc
+!*.tfstate.*.enc
 terraform.tfvars
 terraform.tfvars.json
-generated/
+!terraform.tfvars.enc
+generated/*
+!generated/*.enc
