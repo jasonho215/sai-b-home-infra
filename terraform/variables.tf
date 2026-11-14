@@ -31,7 +31,7 @@ variable "kubernetes_version" {
 }
 
 variable "node_image_name" {
-  description = "aarch64 OKE node image source name. Must match kubernetes_version."
+  description = "x86_64 OKE node image source name. Must match kubernetes_version."
   type        = string
-  default     = "Oracle-Linux-9.8-aarch64-2026.10.16-0-OKE-1.36.4-2067"
+  default     = "Oracle-Linux-9.8-2026.10.16-0-OKE-1.36.4-2067"
 }

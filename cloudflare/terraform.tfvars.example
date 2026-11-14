@@ -1,3 +1,4 @@
 cloudflare_api_token = "replace-with-a-token"
 account_id           = "e3108199d8c3ee04b18bf1b0a2ab79a2"
-mattermost_hostname  = ""
+zone_id              = "d7b875a504ad4965d682a60a2ccd5594"
+mattermost_hostname  = "mattermost.cowzaap.dev"

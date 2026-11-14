@@ -28,17 +28,17 @@ resource "oci_containerengine_cluster" "this" {
   }
 }
 
-resource "oci_containerengine_node_pool" "arm" {
+resource "oci_containerengine_node_pool" "workers" {
   compartment_id     = var.compartment_ocid
   cluster_id         = oci_containerengine_cluster.this.id
   kubernetes_version = var.kubernetes_version
-  name               = "${local.name}-arm"
-  node_shape         = "VM.Standard.A1.Flex"
+  name               = "${local.name}-e4"
+  node_shape         = "VM.Standard.E4.Flex"
   ssh_public_key     = tls_private_key.workers.public_key_openssh
 
   node_shape_config {
     ocpus         = 1
-    memory_in_gbs = 6
+    memory_in_gbs = 8
   }
 
   node_source_details {
@@ -53,7 +53,6 @@ resource "oci_containerengine_node_pool" "arm" {
     placement_configs {
       availability_domain = local.availability_domain
       subnet_id           = oci_core_subnet.workers.id
-      fault_domains       = ["FAULT-DOMAIN-1", "FAULT-DOMAIN-2"]
     }
   }
 

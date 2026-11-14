@@ -3,6 +3,11 @@ output "tunnel_id" {
   value       = cloudflare_zero_trust_tunnel_cloudflared.this.id
 }
 
+output "mattermost_url" {
+  description = "Mattermost URL. Cloudflare Access denies clients that are not enrolled in this Zero Trust organization."
+  value       = "https://${var.mattermost_hostname}"
+}
+
 output "private_routes" {
   description = "CIDRs published through the tunnel."
   value       = local.private_routes
