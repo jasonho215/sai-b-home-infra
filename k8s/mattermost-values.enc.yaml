@@ -1,0 +1,68 @@
+# Values for the official chart mattermost/mattermost-team-edition.
+# Install the local k8s/platform chart first. It provides Postgres, the
+# storage class, and cloudflared. This chart's bundled database is MySQL.
+# The database connection string is encrypted in mattermost-values.enc.yaml.
+# make decrypt-all writes this plaintext file for helm.
+image:
+    repository: docker.io/mattermost/mattermost-team-edition
+    tag: 12.0.2
+    imagePullPolicy: IfNotPresent
+mysql:
+    enabled: false
+externalDB:
+    enabled: true
+    externalDriverType: postgres
+    externalConnectionString: ENC[AES256_GCM,data:+RpVAmbsRlEcWJlJQp9MgXPINp8fzVPCFHED7bgzodBdv1dz1p+oDOUGbG4CRqSyDpxlc0HUPsNtAU7nfAJF5noLQEl5Bs8ppJzc2o361WjgvAjqP8ICH9eOglnVjdQSqRov/OAnELfxZLABMIPbGT562Ndu/NVUoTdBEPn3,iv:0ULgKPcLamwCv0kbSZE5JemYxyz+mr0dMx71eYhYyOU=,tag:CiG3MqgRGtMF02bvJxifIA==,type:str]
+config:
+    MM_SERVICESETTINGS_SITEURL: https://mattermost.cowzaap.dev
+service:
+    type: ClusterIP
+ingress:
+    enabled: false
+persistence:
+    data:
+        enabled: true
+        size: 30Gi
+        storageClass: oci-bv-lower-cost
+        accessMode: ReadWriteOnce
+    plugins:
+        enabled: true
+        size: 1Gi
+        storageClass: oci-bv-lower-cost
+        accessMode: ReadWriteOnce
+resources:
+    requests:
+        cpu: 100m
+        memory: 1Gi
+    limits:
+        memory: 2Gi
+securityContext:
+    runAsUser: 2000
+    runAsGroup: 2000
+    fsGroup: 2000
+sops:
+    encrypted_regex: (password|token|externalConnectionString)$
+    lastmodified: "2026-11-14T17:47:17Z"
+    mac: ENC[AES256_GCM,data:xf4G/0Z1alK8ANCQF2rT0KvOw381A+TqQcnOI8Dw+aqERLRupyVPNADnR7EPm9D4RR2RX4yLDaHUiWkn7AhMYFCtzK1O2ASbIAvCsKzz7npzqYT99GLjXsiQSOh3LMv5TUi9njfHLbyBJbBBEpTQbld2lQOKKemxN/1koIXnvKI=,iv:FEDnC2onCcsIFy60O4MuWZUxcoVljWsfpTntK+IS/EY=,tag:yXEtG4dzths19vmAyivSiA==,type:str]
+    pgp:
+        - created_at: "2026-11-14T17:47:17Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hQIMA714KLO3dzZBAQ/7BbQD7hAe2q7GtAQ9UqT5ccoOTUzbstvuEI1pkWgMY3tj
+            avXcJe/fUSNydXzBHvtdRrJVohnXoy17w7n0mmdLM1jO+MEzGuWtx04CLOot8nGJ
+            vllCJu81vnYYFlCX3v8j1hIOhJ45/Hhr8/MrqnPITnL0QBUY0T1Xe0BpR1uZDvaj
+            ees1YcMRLlIiQy5QmzAiwGL17CB/by8k4tQl0jXtleRjKcZVfaffyqnhTaMcuo5a
+            rY05MKOjE9bAaU+wtvsVGku170vAdUVAWSVHiEETJ60AuDlqcEMqhpsokVMonlFh
+            MU3Pnqk8Ul+Q4ftnnpFx00uaMumgM7tFTy7eTYV62HC/CF2AcbPEZIMFuBv4XsTZ
+            qVFwRdbm8Cd7fJg/UJENW81f+NEX3xAycNRsF2YJvUXcOkqJdqBA5hJTDXg/P2y7
+            wiG58+wED2EqzyPLnuHvkGSW5HQyZpfInCPJ0yN20q742RrV5Ky4UKiQVX3cS0Qx
+            wGIOT74RfNqaX3lsrrz7jL1EyyM/xY4H6Fiq4hamOabSaoDKVvtLGfI89UK+Swpa
+            bT8bb1Nr6Aq7wbu36YHNprR2Nl8cweszOMzfXUox9j1g9LyDdCvpdJJ7hYp3tBSp
+            FOJWTa/1OmNk0nNvuHO32tqBMDYUOQM2LhIvX4eb66CEOxxP4MZO156k/Ekz5HLS
+            XgGToLGjWyRz36BQhu5cCtwbYYf4za1B66WmSNHNRbfauBXuoexawaszwYguf5Bh
+            6cqSCLGTHFGvlHOth9M/vqqO2A2KOHm0tq4LHbPS0G75rM2XL+8NvywWO1pFECo=
+            =d4fL
+            -----END PGP MESSAGE-----
+          fp: ED7833DEE149B3BAFDB01329ECE724055939E0C0
+    version: 3.13.3
