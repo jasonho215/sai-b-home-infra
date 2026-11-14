@@ -3,6 +3,7 @@
 #   make apply
 #   make platform
 #   make mattermost
+#   make agents
 #   make encrypt-all
 #   make decrypt-all
 #   make cleanup
@@ -19,12 +20,12 @@ export SUPPRESS_LABEL_WARNING ?= True
 export OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING ?= True
 export KUBECONFIG ?= $(CURDIR)/$(KUBECONFIG_FILE)
 
-.PHONY: help apply platform mattermost connect
+.PHONY: help apply platform mattermost agents connect
 
 help:
-	@echo "targets: connect apply platform mattermost encrypt-all decrypt-all cleanup"
+	@echo "targets: connect apply platform mattermost agents encrypt-all decrypt-all cleanup"
 
-apply: platform mattermost
+apply: platform mattermost agents
 
 connect: $(BASTION_KEY).pub
 	@set -e; \
@@ -112,6 +113,14 @@ mattermost:
 		--create-namespace \
 		-f mattermost-values.yaml \
 		--wait --timeout 10m
+
+agents:
+	@test -f "$$KUBECONFIG" || { echo "run make connect first"; exit 1; }
+	@test -f secrets.yaml || { echo "run make decrypt-all from the repository root first"; exit 1; }
+	helm upgrade --install agents ./agents --namespace agent-pool --create-namespace \
+		-f agents/values.yaml \
+		-f secrets.yaml \
+		--wait --timeout 20m
 
 $(BASTION_KEY):
 	mkdir -p $(dir $@)

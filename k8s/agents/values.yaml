@@ -1,0 +1,31 @@
+namespace: agent-pool
+
+# Created by the platform chart. Agents only reference it.
+storageClass: oci-bv-lower-cost
+
+# The container starts as root so its entrypoint can chown /opt/data, then
+# drops to this user. The volume fsGroup matches it.
+runAs:
+  uid: 10000
+  gid: 10000
+
+image:
+  repository: docker.io/nousresearch/hermes-agent
+  tag: stable
+
+# Keys are Deployment names. Dashboard passwords live in k8s/secrets.yaml
+# and are merged at install: agents.<name>.dashboardPassword and
+# agents.<name>.dashboardSessionToken.
+agents:
+  hermes-jasonho:
+    storage: 50Gi
+    dashboard:
+      enabled: true
+      username: jasonho
+      port: 9119
+    resources:
+      requests:
+        cpu: 100m
+        memory: 1Gi
+      limits:
+        memory: 2Gi

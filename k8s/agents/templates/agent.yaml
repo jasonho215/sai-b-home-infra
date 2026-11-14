@@ -1,0 +1,130 @@
+{{- range $name, $agent := .Values.agents }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ $.Values.storageClass }}
+  resources:
+    requests:
+      storage: {{ $agent.storage }}
+---
+{{- if $agent.dashboard.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+type: Opaque
+stringData:
+  dashboardPassword: {{ required (printf "agents.%s.dashboardPassword is required" $name) $agent.dashboardPassword | quote }}
+  dashboardSessionToken: {{ required (printf "agents.%s.dashboardSessionToken is required" $name) $agent.dashboardSessionToken | quote }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+        app.kubernetes.io/name: {{ $name }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+    spec:
+      securityContext:
+        fsGroup: {{ $.Values.runAs.gid }}
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: hermes
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          args: ["gateway", "run"]
+          ports:
+            - name: dashboard
+              containerPort: {{ $agent.dashboard.port }}
+          env:
+            - name: HERMES_UID
+              value: {{ $.Values.runAs.uid | quote }}
+            - name: HERMES_GID
+              value: {{ $.Values.runAs.gid | quote }}
+            # Nodes have no Docker socket. Shell tools run in this container.
+            - name: TERMINAL_ENV
+              value: local
+            - name: HERMES_DASHBOARD
+              value: {{ ternary "1" "0" $agent.dashboard.enabled | quote }}
+            {{- if $agent.dashboard.enabled }}
+            - name: HERMES_DASHBOARD_PORT
+              value: {{ $agent.dashboard.port | quote }}
+            - name: HERMES_DASHBOARD_BASIC_AUTH_USERNAME
+              value: {{ $agent.dashboard.username | quote }}
+            - name: HERMES_DASHBOARD_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $name }}
+                  key: dashboardPassword
+            - name: HERMES_DASHBOARD_BASIC_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $name }}
+                  key: dashboardSessionToken
+            {{- end }}
+          {{- if $agent.dashboard.enabled }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: dashboard
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: dashboard
+            periodSeconds: 10
+          {{- end }}
+          resources:
+            {{- toYaml $agent.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+              subPath: hermes
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+spec:
+  selector:
+    app: {{ $name }}
+  ports:
+    - name: dashboard
+      port: {{ $agent.dashboard.port }}
+      targetPort: dashboard
+{{- end }}

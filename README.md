@@ -11,6 +11,7 @@ Two Terraform roots keep Oracle and Cloudflare credentials apart. Kubernetes rel
 | `terraform/` | VCN, private OKE cluster, two worker nodes, NAT, bastion |
 | `cloudflare/` | Tunnel `sai-b-home`, WARP device settings, Access, public DNS |
 | `k8s/platform` | Storage class, Postgres, `cloudflared` |
+| `k8s/agents` | Hermes agents in namespace `agent-pool` |
 | `k8s/` | Mattermost Helm values and `make connect` |
 | `.sops.yaml` | PGP recipient for encrypted secrets |
 
@@ -108,7 +109,8 @@ The rest of `10.0.0.0/8` is excluded from WARP after `10.0.0.0/8` is removed fro
 | Egress | `0.0.0.0/0` via the NAT gateway. Oracle services use the service gateway |
 | WARP routes | `10.0.1.0/24`, `10.0.2.0/28`, `10.0.3.0/24` |
 | API Access | Private application `kubernetes-api` for `10.0.2.0/28` TCP `6443` |
-| Namespaces | `platform` for Postgres, `mattermost` for the app, `cloudflare` for two `cloudflared` replicas |
+| Namespaces | `platform` for Postgres, `mattermost` for the app, `cloudflare` for two `cloudflared` replicas, `agent-pool` for Hermes |
+| Hermes | Deployment `hermes-jasonho`. Dashboard on ClusterIP port `9119`. State on a 50 GB volume at `/opt/data` |
 | Mail | Mattermost submits to `smtp.mx.cloudflare.net:465`. Email Sending for `cowzaap.dev` is configured in Cloudflare, outside these Terraform roots |
 
 An enrolled device can open `10.0.2.5:6443` through WARP only when the `kubernetes-api` Access application allows it. `make connect` still publishes a bastion forward on `127.0.0.1:6443` and rewrites the local kubeconfig to that address. The API security list accepts 6443 from the worker subnet, which is where `cloudflared` and the bastion session originate.
@@ -164,11 +166,12 @@ Connect WARP, then open the bastion session and install the charts. The platform
 make -C k8s connect
 make -C k8s platform
 make -C k8s mattermost
+make -C k8s agents
 ```
 
 `make connect` prints the `KUBECONFIG` path. The OCI profile is already written into that kubeconfig. The bastion session lives for 3 hours. Run `make connect` again after it expires. An existing forward on `127.0.0.1:6443` is reused.
 
-`make -C k8s apply` runs platform and then Mattermost.
+`make -C k8s apply` runs platform, Mattermost, and then the agents chart.
 
 After changing a secret, encrypt it back and remove the plaintext copy:
 
@@ -178,6 +181,18 @@ make cleanup
 ```
 
 `cleanup` deletes a plaintext file only when its `.enc` sibling is already there.
+
+## Agents
+
+`k8s/agents` installs one Hermes Deployment per entry in `agents/values.yaml`. The release lives in namespace `agent-pool`. The first deployment is `hermes-jasonho`. Its dashboard is a ClusterIP service on port `9119`, and its state is a 50 GB block volume mounted at `/opt/data`. Oracle's minimum volume size is 50 GB. Shell tools run in that container. The nodes have no Docker socket.
+
+Dashboard username `jasonho` and the password are in `k8s/secrets.yaml` under `agents.hermes-jasonho`. Install after the platform chart, which creates the storage class:
+
+```sh
+make -C k8s agents
+```
+
+This deployment is empty. Moving the Agent37 instance is a later copy of a `hermes backup` into this volume, then a restart. Do not run both copies against the same data directory.
 
 ## Mattermost
 
