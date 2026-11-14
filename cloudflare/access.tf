@@ -6,9 +6,23 @@ resource "cloudflare_zero_trust_device_posture_rule" "gateway" {
   type       = "gateway"
 }
 
+# Mattermost and the API use the same posture check today, but the policies
+# stay separate so a later service can be allowed onto Mattermost alone.
 resource "cloudflare_zero_trust_access_policy" "mattermost" {
   account_id = var.account_id
   name       = "sai-b-home mattermost enrolled devices"
+  decision   = "allow"
+
+  include = [{
+    device_posture = {
+      integration_uid = cloudflare_zero_trust_device_posture_rule.gateway.id
+    }
+  }]
+}
+
+resource "cloudflare_zero_trust_access_policy" "kubernetes" {
+  account_id = var.account_id
+  name       = "sai-b-home kubernetes enrolled devices"
   decision   = "allow"
 
   include = [{
@@ -29,6 +43,31 @@ resource "cloudflare_zero_trust_access_application" "mattermost" {
 
   policies = [{
     id         = cloudflare_zero_trust_access_policy.mattermost.id
+    precedence = 1
+  }]
+}
+
+# Private destination. Access denies this port unless the kubernetes policy
+# matches, even when the device is already enrolled and the tunnel route exists.
+# Worker and load-balancer routes are not covered by this application.
+resource "cloudflare_zero_trust_access_application" "kubernetes" {
+  account_id                  = var.account_id
+  name                        = "kubernetes-api"
+  type                        = "self_hosted"
+  session_duration            = "24h"
+  app_launcher_visible        = false
+  allow_authenticate_via_warp = true
+  auto_redirect_to_identity   = false
+
+  destinations = [{
+    type        = "private"
+    cidr        = local.private_routes.api
+    port_range  = "6443"
+    l4_protocol = "tcp"
+  }]
+
+  policies = [{
+    id         = cloudflare_zero_trust_access_policy.kubernetes.id
     precedence = 1
   }]
 }

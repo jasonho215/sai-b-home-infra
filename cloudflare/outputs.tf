@@ -4,8 +4,13 @@ output "tunnel_id" {
 }
 
 output "mattermost_url" {
-  description = "Mattermost URL. Cloudflare Access denies clients that are not enrolled in this Zero Trust organization."
+  description = "Mattermost URL. Its Access application is separate from the Kubernetes API."
   value       = "https://${var.mattermost_hostname}"
+}
+
+output "kubernetes_access_application" {
+  description = "Private Access application for the OKE API on TCP 6443. Enrollment alone does not allow this destination."
+  value       = cloudflare_zero_trust_access_application.kubernetes.name
 }
 
 output "private_routes" {

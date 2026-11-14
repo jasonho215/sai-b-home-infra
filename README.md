@@ -32,32 +32,72 @@ The cluster API is private. `kubectl` reaches it through an OCI Bastion port-for
 ```mermaid
 flowchart LR
   client["Enrolled WARP device"]
-  access["Cloudflare Access"]
+  mattermostAccess["Access mattermost"]
+  apiAccess["Access kubernetes-api"]
   tunnel["Tunnel sai-b-home"]
   connector["cloudflared"]
   app["Mattermost :8065"]
+  api["OKE API :6443"]
   db["Postgres 16"]
 
-  client --> access --> tunnel --> connector --> app --> db
+  client --> mattermostAccess --> tunnel --> connector --> app --> db
+  client --> apiAccess --> tunnel --> connector --> api
 ```
 
-Browsers use `https://mattermost.cowzaap.dev`. Access allows a device only when it is enrolled in this Zero Trust org. The tunnel origin is `mattermost-team-edition.mattermost.svc.cluster.local:8065`.
+Browsers use `https://mattermost.cowzaap.dev`. That hostname is its own Access application. The policy allows a device only when it is enrolled in this Zero Trust org. The tunnel origin is `mattermost-team-edition.mattermost.svc.cluster.local:8065`.
+
+The Kubernetes API is a second Access application, `kubernetes-api`. Its destination is the API subnet `10.0.2.0/28` on TCP `6443`. The tunnel still publishes that route, and Access denies the port unless the kubernetes policy matches. The two policies both require enrollment today, and they are separate resources so a later service can be added to Mattermost without being added to the API. Worker and load-balancer routes are not part of either application.
 
 ```mermaid
 flowchart TB
-  laptop["Laptop kubectl"]
+  device["Enrolled device"]
   bastion["OCI Bastion"]
-  subgraph vcn["VCN 10.0.0.0/16"]
-    workers["Workers 10.0.1.0/24"]
-    api["Private API 10.0.2.0/28"]
-    lb["Service LB 10.0.3.0/24"]
-    nat["NAT gateway"]
+
+  subgraph edge["Cloudflare"]
+    mm["mattermost.cowzaap.dev"]
+    kapi["kubernetes-api<br/>10.0.2.0/28 TCP 6443"]
+    tunnel["Tunnel sai-b-home"]
   end
 
-  laptop -->|"SSH forward to 127.0.0.1:6443"| bastion --> api
+  subgraph vcn["VCN 10.0.0.0/16"]
+    subgraph workers["Workers 10.0.1.0/24"]
+      connector["cloudflared"]
+      app["Mattermost :8065"]
+      db["Postgres"]
+      overlay["Pods 10.244.0.0/16<br/>Services 10.96.0.0/16"]
+    end
+    api["API 10.0.2.5:6443<br/>subnet 10.0.2.0/28"]
+    lb["Service LB 10.0.3.0/24"]
+    nat["NAT gateway"]
+    sgw["Service gateway"]
+  end
+
+  device --> mm --> tunnel
+  device --> kapi --> tunnel
+  device -->|"127.0.0.1:6443"| bastion --> api
+  tunnel --> connector
+  connector --> app --> db
+  connector --> api
   workers --> api
+  workers --> lb
   workers --> nat
+  workers --> sgw
+  api --> sgw
 ```
+
+| Range | Use |
+| --- | --- |
+| `10.0.0.0/16` | VCN `sai-b-home-vcn`. Every subnet is private. |
+| `10.0.0.0/24` | Not allocated. Left out of WARP so a home LAN in this range stays on the local network. |
+| `10.0.1.0/24` | Worker nodes. Published on the tunnel. Any enrolled device can reach it. The security list allows the VCN and the pod overlay in. |
+| `10.0.2.0/28` | OKE API subnet. The endpoint is `10.0.2.5:6443`. Published on the tunnel. The `kubernetes-api` Access application allows TCP `6443`. The security list accepts `6443` and webhook port `12250` only from the worker subnet. |
+| `10.0.3.0/24` | Subnet for a private service load balancer. Published on the tunnel. Empty until a load balancer is created. |
+| `10.244.0.0/16` | Flannel pod overlay. Stays inside the cluster and is not a tunnel route. |
+| `10.96.0.0/16` | Kubernetes service network, including Postgres. Stays inside the cluster and is not a tunnel route. |
+| `0.0.0.0/0` | Worker egress through the NAT gateway. |
+| Oracle Services Network | API and worker traffic to Oracle services, through the service gateway. The route destination is `all-xsp-services-in-oracle-services-network`. |
+
+The rest of `10.0.0.0/8` is excluded from WARP after `10.0.0.0/8` is removed from the device profile. The exact holes are `split_tunnel_exclude_add` in `cloudflare/outputs.tf`. Only `10.0.1.0/24`, `10.0.2.0/28`, and `10.0.3.0/24` from that space are sent into the tunnel.
 
 | Piece | Choice |
 | --- | --- |
@@ -67,10 +107,11 @@ flowchart TB
 | Nodes | Two `VM.Standard.E4.Flex`, 1 OCPU and 8 GB each, 50 GB boot |
 | Egress | `0.0.0.0/0` via the NAT gateway. Oracle services use the service gateway |
 | WARP routes | `10.0.1.0/24`, `10.0.2.0/28`, `10.0.3.0/24` |
+| API Access | Private application `kubernetes-api` for `10.0.2.0/28` TCP `6443` |
 | Namespaces | `platform` for Postgres, `mattermost` for the app, `cloudflare` for two `cloudflared` replicas |
 | Mail | Mattermost submits to `smtp.mx.cloudflare.net:465`. Email Sending for `cowzaap.dev` is configured in Cloudflare, outside these Terraform roots |
 
-`kubectl` still uses the bastion forward. Dialing `10.0.2.5:6443` from the laptop fails even when WARP and `cloudflared` are up. The API security list accepts 6443 from the worker subnet, which is the bastion target subnet.
+An enrolled device can open `10.0.2.5:6443` through WARP only when the `kubernetes-api` Access application allows it. `make connect` still publishes a bastion forward on `127.0.0.1:6443` and rewrites the local kubeconfig to that address. The API security list accepts 6443 from the worker subnet, which is where `cloudflared` and the bastion session originate.
 
 `k8s/generated/` is local and stays untracked. `make connect` creates the bastion key if it is missing and rewrites a kubeconfig that calls the OCI CLI. The cluster kubeconfig, worker SSH key, database password, and tunnel token are the files under `terraform/generated/*.enc` and `cloudflare/generated/*.enc`.
 
