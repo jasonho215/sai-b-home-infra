@@ -34,18 +34,21 @@ The cluster API is private. `kubectl` reaches it through an OCI Bastion port-for
 flowchart LR
   client["Enrolled WARP device"]
   mattermostAccess["Access mattermost"]
+  hermesAccess["Access hermes-jasonho"]
   apiAccess["Access kubernetes-api"]
   tunnel["Tunnel sai-b-home"]
   connector["cloudflared"]
   app["Mattermost :8065"]
+  hermes["Hermes :9119"]
   api["OKE API :6443"]
   db["Postgres 16"]
 
   client --> mattermostAccess --> tunnel --> connector --> app --> db
+  client --> hermesAccess --> tunnel --> connector --> hermes
   client --> apiAccess --> tunnel --> connector --> api
 ```
 
-Browsers use `https://mattermost.cowzaap.dev`. That hostname is its own Access application. The policy allows a device only when it is enrolled in this Zero Trust org. The tunnel origin is `mattermost-team-edition.mattermost.svc.cluster.local:8065`.
+Browsers use `https://mattermost.cowzaap.dev` and `https://agent-hermes-jasonho.cowzaap.dev`. Each hostname is its own Access application. The policy allows a device only when it is enrolled in this Zero Trust org. The tunnel origins are `mattermost-team-edition.mattermost.svc.cluster.local:8065` and `hermes-jasonho.agent-pool.svc.cluster.local:9119`.
 
 The Kubernetes API is a second Access application, `kubernetes-api`. Its destination is the API subnet `10.0.2.0/28` on TCP `6443`. The tunnel still publishes that route, and Access denies the port unless the kubernetes policy matches. The two policies both require enrollment today, and they are separate resources so a later service can be added to Mattermost without being added to the API. Worker and load-balancer routes are not part of either application.
 
@@ -56,6 +59,7 @@ flowchart TB
 
   subgraph edge["Cloudflare"]
     mm["mattermost.cowzaap.dev"]
+    hermesHost["agent-hermes-jasonho.cowzaap.dev"]
     kapi["kubernetes-api<br/>10.0.2.0/28 TCP 6443"]
     tunnel["Tunnel sai-b-home"]
   end
@@ -74,6 +78,7 @@ flowchart TB
   end
 
   device --> mm --> tunnel
+  device --> hermesHost --> tunnel
   device --> kapi --> tunnel
   device -->|"127.0.0.1:6443"| bastion --> api
   tunnel --> connector
@@ -184,7 +189,7 @@ make cleanup
 
 ## Agents
 
-`k8s/agents` installs one Hermes Deployment per entry in `agents/values.yaml`. The release lives in namespace `agent-pool`. The first deployment is `hermes-jasonho`. Its dashboard is a ClusterIP service on port `9119`, and its state is a 50 GB block volume mounted at `/opt/data`. Oracle's minimum volume size is 50 GB. Shell tools run in that container. The nodes have no Docker socket.
+`k8s/agents` installs one Hermes Deployment per entry in `agents/values.yaml`. The release lives in namespace `agent-pool`. The first deployment is `hermes-jasonho`. Its dashboard is a ClusterIP service on port `9119`, published at `https://agent-hermes-jasonho.cowzaap.dev`. Its state is a 50 GB block volume mounted at `/opt/data`. Oracle's minimum volume size is 50 GB. Shell tools run in that container. The nodes have no Docker socket.
 
 Dashboard username `jasonho` and the password are in `k8s/secrets.yaml` under `agents.hermes-jasonho`. Install after the platform chart, which creates the storage class:
 

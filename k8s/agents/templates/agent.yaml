@@ -87,6 +87,10 @@ spec:
                 secretKeyRef:
                   name: {{ $name }}
                   key: dashboardSessionToken
+            {{- if $agent.dashboard.publicURL }}
+            - name: HERMES_DASHBOARD_PUBLIC_URL
+              value: {{ $agent.dashboard.publicURL | quote }}
+            {{- end }}
             {{- end }}
           {{- if $agent.dashboard.enabled }}
           startupProbe:

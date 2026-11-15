@@ -21,3 +21,9 @@ variable "mattermost_hostname" {
   type        = string
   default     = "mattermost.cowzaap.dev"
 }
+
+variable "hermes_hostname" {
+  description = "Hermes dashboard hostname published through the tunnel. Access allows only devices enrolled in this Zero Trust organization."
+  type        = string
+  default     = "agent-hermes-jasonho.cowzaap.dev"
+}

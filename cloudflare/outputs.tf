@@ -8,6 +8,11 @@ output "mattermost_url" {
   value       = "https://${var.mattermost_hostname}"
 }
 
+output "hermes_url" {
+  description = "Hermes dashboard URL. Its Access application is separate from Mattermost and the Kubernetes API."
+  value       = "https://${var.hermes_hostname}"
+}
+
 output "kubernetes_access_application" {
   description = "Private Access application for the OKE API on TCP 6443. Enrollment alone does not allow this destination."
   value       = cloudflare_zero_trust_access_application.kubernetes.name

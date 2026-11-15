@@ -23,6 +23,8 @@ agents:
       enabled: true
       username: jasonho
       port: 9119
+      # Published by the sai-b-home tunnel. Access allows enrolled devices only.
+      publicURL: https://agent-hermes-jasonho.cowzaap.dev
     resources:
       requests:
         cpu: 100m

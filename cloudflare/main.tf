@@ -23,6 +23,10 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
         hostname = var.mattermost_hostname
         service  = "http://mattermost-team-edition.mattermost.svc.cluster.local:8065"
       }],
+      var.hermes_hostname == "" ? [] : [{
+        hostname = var.hermes_hostname
+        service  = "http://hermes-jasonho.agent-pool.svc.cluster.local:9119"
+      }],
       [{
         service = "http_status:404"
       }],
